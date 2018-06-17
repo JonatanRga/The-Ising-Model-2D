@@ -112,40 +112,93 @@ int main()
 
 
 
-	//int aMatrix[LatSize][LatSize];
+	
 	int M1;
-
-	int neighbour = 4;    // nearest neighbour count
+	int LogFlag1 = 0;		//using for log creation
+	int neighbour = 2;    // nearest neighbour count
 	int flipCounter = 1; // number of flips count when energy is lower
 	int flipCounter1 = 1;	//numer of flips when energy is else
 	int currConfig = 1; //number of sweeps count
-	int Nflips = 200;  // number of sweeps	520
+	int Nflips = 20;  // number of sweeps	520
 	double avgM;          // average magnetic moment
 	unsigned int M = 0;	  //will store current sum Spin - Z
 	int sumM = 0;   //Cumulative Magnetic Moment starts from 0
 
-	double E;		//Energy
-	double T = 200;
-	double kB = 1.0;		//8.6173303e-5;	//Boltzman constant in eV/K
+	double E=0;		//Energy
+	double T;		//Temperature
+	double kB = 1.0;  // 8.6173303e-5;	//Boltzman constant in eV/K
+
 
 	int x;		// coordinates on the ising matrix
 	int y;
 
 	float pFlip;	//probability of flip
 
-	int delta_M;
-	int delta_neighbour;
-	int delta_E;
-	E = (-1) * neighbour / (2 - kB * M);   //Total Energy
-	int LogFlag1 = 0;
-
+	double delta_M = 0;
+	double delta_neighbour = 0;
+	double delta_E = 0;
+	
+	int bezpiecznik = 0;
+	
 	cSpin	spin;
 
+	do       //	we are choosing state answering to temperature range in while condition
+	{
+		cSpin	spin;									// we are choosing initial state
+		M = spin.SpinSum();								//statistic sum in Ising model called also Z
+
+		for (int i = 0; i < LatSize; i++)
+			for (int j = 0; j < LatSize; j++)
+			{
+				y = i;
+				x = j;
+				delta_M += 0.5 * spin(x, y);    //change in Magnetic Moment	2->0.5
+				delta_neighbour += delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
+				
+			}
+		delta_E = (-1) * delta_neighbour / 2 - kB * delta_M; //Change in total energy
+		E = -delta_E;
+		T = (2 * E) / (neighbour *kB);
+		//E = (-1) * ((double)neighbour) / (2 - kB * M);   //Total Energy
+
+		cout << "    E: " << E << "        T: " << T << endl;
+
+		bezpiecznik++;
+
+
+
+	} while (!(((T > 200) && (T < 300)) || (bezpiecznik>1000)));
+
+	cout << endl << "-------------------------------------" << endl;
+	cout << endl << "Choosen state to following Energy and Temperature:" <<endl;
+	cout << "    E: " << E << "        T: " << T << endl;
+	cout << endl << "corresponding matrix to this state:" << endl;
+	spin.display();
+	cout << endl << "cooling down in progress..." << endl;
+	M = spin.SpinSum();
+	M += delta_M;
+
+	int aMatrix[LatSize][LatSize];
+
+	for (int i = 0; i < LatSize; i++)
+	{
+		for (int j = 0; j < LatSize; j++)
+		{
+			aMatrix[i][j] = spin(j, i);
+			cout << setw(2) << aMatrix[i][j] << " ";
+		}
+		cout << endl;
+	}
+	cout << endl << "-------------------------------------" << endl;
+
+
+	//E = (-1) * ((double)neighbour) / (2 - kB * M);   //Total Energy
+	//T = (2 * delta_E) / (delta_neighbour *kB);
+	
 	for (int s = 0; s < Nflips; ++s)    //Loop for Nflips of sweeps
 	{
-		
 		spin.display();
-
+		
 		for (int t = 0; t < LatSize * LatSize; ++t)   //Loop for 1 Sweep
 		{
 			M = spin.SpinSum();
@@ -158,7 +211,7 @@ int main()
 			delta_E = (-1) * delta_neighbour / 2 - kB * delta_M; //Change in total energy
 
 			//E = (-1) * neighbour / (2 - kB * M);   //Total Energy
-			T = (2 * delta_E) / (delta_neighbour *kB);
+			
 
 			
 			if ((delta_E < 0)  || (dis(generator) < (double)exp(-delta_E)))
@@ -168,6 +221,7 @@ int main()
 				flipCounter++;
 				M += delta_M;												// New Magnetization energy of flipped configuration
 				E += delta_E;												// New total energy of flipped configuration
+				T = (2 * delta_E) / (delta_neighbour *kB);
 				sumM += M;												    //Summing up M to find sumM
 
 				currConfig = (double)flipCounter / (LatSize * LatSize);	//Total number of sweeps till this point
@@ -175,7 +229,7 @@ int main()
 				if (currConfig == 0)
 					currConfig = 1;
 				avgM = (sumM) / currConfig;									//Average M
-														// Total number of sites chosen up till this point
+													// Total number of sites chosen up till this point
 			}
 			else
 			{
