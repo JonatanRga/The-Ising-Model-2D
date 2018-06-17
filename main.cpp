@@ -118,7 +118,7 @@ int main()
 	int neighbour = 4;    // nearest neighbour count
 	int flipCounter = 1; // number of flips count when energy is lower
 	int flipCounter1 = 1;	//numer of flips when energy is else
-	int currConfig = 0; //number of sweeps count
+	int currConfig = 1; //number of sweeps count
 	int Nflips = 200;  // number of sweeps	520
 	double avgM;          // average magnetic moment
 	unsigned int M = 0;	  //will store current sum Spin - Z
@@ -136,13 +136,14 @@ int main()
 	int delta_M;
 	int delta_neighbour;
 	int delta_E;
-
+	E = (-1) * neighbour / (2 - kB * M);   //Total Energy
 	int LogFlag1 = 0;
 
+	cSpin	spin;
 
 	for (int s = 0; s < Nflips; ++s)    //Loop for Nflips of sweeps
 	{
-		cSpin	spin;
+		
 		spin.display();
 
 		for (int t = 0; t < LatSize * LatSize; ++t)   //Loop for 1 Sweep
@@ -156,30 +157,34 @@ int main()
 			delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
 			delta_E = (-1) * delta_neighbour / 2 - kB * delta_M; //Change in total energy
 
-			E = (-1) * neighbour / (2 - kB * M);   //Total Energy
+			//E = (-1) * neighbour / (2 - kB * M);   //Total Energy
 			T = (2 * delta_E) / (delta_neighbour *kB);
 
-			float pFlip = exp((-1)*delta_E);
-
-			if ((delta_E < 0) )//|| (dis(generator) < (double)exp(-delta_E)))
+			
+			if ((delta_E < 0)  || (dis(generator) < (double)exp(-delta_E)))
 			{
 				//spin(x, y) *= -1;
 
+				flipCounter++;
 				M += delta_M;												// New Magnetization energy of flipped configuration
 				E += delta_E;												// New total energy of flipped configuration
 				sumM += M;												    //Summing up M to find sumM
+
+				currConfig = (double)flipCounter / (LatSize * LatSize);	//Total number of sweeps till this point
+				currConfig = (double)flipCounter / (LatSize * LatSize);	    //Total number of sweeps till this point
+				if (currConfig == 0)
+					currConfig = 1;
 				avgM = (sumM) / currConfig;									//Average M
-				flipCounter++;												// Total number of sites chosen up till this point
+														// Total number of sites chosen up till this point
 			}
 			else
 			{
+				cSpin	spin;
 				//currConfig = (double)flipCounter / (LatSize * LatSize);     //Number of Sweeps
 				flipCounter1++;   //Number of Flips
 			}
 			
-			currConfig = (double)flipCounter / (LatSize * LatSize);	//Total number of sweeps till this point
-			if (currConfig == 0)
-				currConfig = 1;
+			
 		}
 
 		
