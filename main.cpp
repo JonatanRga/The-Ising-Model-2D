@@ -53,15 +53,25 @@ public:
 		return iMatrix[x][y];
 	}
 
-	void display()
+	void display(int x, int y)
 	{
 		for (int i = 0; i < LatSize; i++)  // loop for table hight
 		{
 			for (int j = 0; j < LatSize; j++)  // loop for the table lenght
-				std::cout << setw(2) << iMatrix[i][j] << " ";  // display the current element out of the array
+			{
 
+				if ((i == x) && (j == y))
+				{
+					//system("Color A4");
+					std::cout << setw(1) << "("<< setw(1) <<iMatrix[i][j] << ")" << setw(1);  // display the current element out of the array
+					//system("Color A1");
+				}
+				else
+					std::cout << setw(3) << iMatrix[i][j] << " ";  // display the current element out of the array
+			}
 			std::cout << endl;  // when the inner loop is done, go to a new line
 		}
+		
 	}
 
 	void LogMatrix(int logFlag1, float Temp, float Energy)
@@ -127,7 +137,7 @@ int main()
 	double avgM;          // average magnetic moment
 	int M[N] = {};	  //will store current sum Spin - Z
 	int sumM = 0;   //Cumulative Magnetic Moment starts from 0
-
+	double sumE = 0;
 	double E[N] = {};		//Energy
 	double T[N];		//Temperature
 	double kB = 1.0;  // 8.6173303e-5;	//Boltzman constant in eV/K
@@ -177,7 +187,7 @@ int main()
 	std::cout << endl << "Choosen state to following Energy and Temperature:" << endl;
 	std::cout << "    E: " << E[0] << "        T: " << T[0] << endl;
 	std::cout << endl << "corresponding matrix to this state:" << endl;
-	spin.display();
+	spin.display(x, y);
 	std::cout << endl << "cooling down in progress..." << endl;
 	M[0] += delta_M;
 	std::cout << endl << "-------------------------------------" << endl;
@@ -193,8 +203,8 @@ int main()
 		{
 			//for (int j = 0; j < LatSize; j++)
 			//{												//generate_random_coordinate_location
-			y = (int)(dis(generator) * (LatSize + 1));       //Randomly choose x-coordinate add1
-			x = (int)(dis(generator) * (LatSize + 1));        //Randomly choose y-coordinate add1
+			y = (int)(dis(generator) * (LatSize));       //Randomly choose x-coordinate add1
+			x = (int)(dis(generator) * (LatSize));        //Randomly choose y-coordinate add1
 			spin(x, y) *= (-1);
 			delta_M += 2 * spin(x, y);    //change in Magnetic Moment
 
@@ -206,15 +216,15 @@ int main()
 			//}
 			//	}
 
-			delta_E = (-1) * delta_neighbour /( 2 - kB * delta_M); //Change in total energy
+			delta_E = (-1) * delta_neighbour /( 2.0 - kB * delta_M); //Change in total energy
 																 //E = (-1) * neighbour / (2 - kB * M);   //Total Energy
 
-			if ((delta_E < 0.0) || (dis(generator) < (double)exp(-kB * delta_E)))
+			if ((delta_E < 0.0) )//|| (dis(generator) < (double)exp(-kB * delta_E)))
 			{
 				//spin(x, y) *= -1;
 
 				M[flipCounter] = spin.SpinSum() + delta_M;											// New Magnetization energy of flipped configuration
-				E[flipCounter] = delta_E;												// New total energy of flipped configuration
+				sumE += E[flipCounter] = delta_E;												// New total energy of flipped configuration
 				T[flipCounter] = (2 * delta_E) / (delta_neighbour *kB);
 				sumM += M[flipCounter];												    //Summing up M to find sumM
 
@@ -222,10 +232,10 @@ int main()
 																						//currConfig = (double)flipCounter / (LatSize * LatSize);	//Total number of sweeps till this point
 																						//currConfig = (double)flipCounter / (LatSize * LatSize);	    //Total number of sweeps till this point
 
-				std::cout << "-------------------------------------" << endl;
-				std::cout << s << ".    E: " << E[flipCounter] << "        T: " << T[flipCounter] << "        M: " << M[flipCounter] << endl;
+				std::cout << "------------Success!------------------" << endl;
+				std::cout << s << ".    E: " << sumE <<"    delta E: "<< delta_E<< "        T: " << T[flipCounter] << "        M: " << M[flipCounter] << endl;
 				std::cout << "x: " << y << "    y: " << x << endl;
-				spin.display();
+				spin.display(x, y);
 				std::cout << "-------------------------------------" << endl;
 
 				//if (currConfig == 0)
@@ -233,9 +243,7 @@ int main()
 				//avgM = (sumM) / currConfig;									//Average M
 				// Total number of sites chosen up till this point
 				flipCounter++;
-				delta_E = 0;
-				delta_M = 0;
-				delta_neighbour = 0;
+				delta_E = 0.0;
 				s++;
 			}
 			else
@@ -274,7 +282,7 @@ int main()
 	//std::cout << "The number of sweeps = " << currConfig << endl;
 	//std::cout << "The final Magnetic Moment = " << M << endl;
 	//std::cout << "The final average Magnetic Moment = " << avgM << endl;
-
+	
 	system("pause");
 	return 0;
 }
