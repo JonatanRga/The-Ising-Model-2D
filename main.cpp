@@ -1,22 +1,19 @@
 #include <iostream>
 #include <math.h>
-#include <iomanip>
+#include <iomanip>		// for proper show Ising Matrix
 #include <cstdlib>
-#include <ctime>
 #include <fstream>
 #include <random>		
-
-
 
 using namespace std;
 
 const int LatSize = 10;
 
-std::mt19937 generator(124);
-std::uniform_real_distribution<double> dis(0.00, 1.00);
+mt19937 generator(124);
+uniform_real_distribution<double> dis(0.00, 1.00);
 
+//gsl_rng_uniform(r)     decided to use in build to random libary MersneTwister generator instead GSL LIB
 
-//gsl_rng_uniform(r)
 class cSpin
 {
 public:
@@ -107,22 +104,22 @@ int main()
 	const int J = 1;
 	const int B = 1;
 
-	cSpin	spin;
+	//cSpin	spin;
 
 	//srand(static_cast<unsigned> (time(0)));
 
-	spin.display();
+	//spin.display();
 
 
 
-	int aMatrix[LatSize][LatSize];
+	//int aMatrix[LatSize][LatSize];
 	int M1;
 
 	int neighbour = 4;    // nearest neighbour count
 	int flipCounter = 1; // number of flips count when energy is lower
 	int flipCounter1 = 1;	//numer of flips when energy is else
 	int currConfig = 0; //number of sweeps count
-	int Nflips = 20;  // number of sweeps	520
+	int Nflips = 200;  // number of sweeps	520
 	double avgM;          // average magnetic moment
 	unsigned int M = 0;	  //will store current sum Spin - Z
 	int sumM = 0;   //Cumulative Magnetic Moment starts from 0
@@ -136,12 +133,17 @@ int main()
 
 	float pFlip;	//probability of flip
 
+	int delta_M;
+	int delta_neighbour;
+	int delta_E;
 
 	int LogFlag1 = 0;
 
 
 	for (int s = 0; s < Nflips; ++s)    //Loop for Nflips of sweeps
 	{
+		cSpin	spin;
+		spin.display();
 
 		for (int t = 0; t < LatSize * LatSize; ++t)   //Loop for 1 Sweep
 		{
@@ -150,45 +152,41 @@ int main()
 			x = (int)(dis(generator) * (LatSize + 1));       //Randomly choose x-coordinate add1
 			y = (int)(dis(generator) * (LatSize + 1));        //Randomly choose y-coordinate add1
 
-			int delta_M = -2 * spin(x, y);    //change in Magnetic Moment
-			int delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
-			int delta_E = (-1) * delta_neighbour / 2 - kB * delta_M; //Change in total energy
+			delta_M = -2 * spin(x, y);    //change in Magnetic Moment
+			delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
+			delta_E = (-1) * delta_neighbour / 2 - kB * delta_M; //Change in total energy
 
 			E = (-1) * neighbour / (2 - kB * M);   //Total Energy
 			T = (2 * delta_E) / (delta_neighbour *kB);
 
 			float pFlip = exp((-1)*delta_E);
 
-			if ((delta_E < 0) || (dis(generator) < (double)exp(-delta_E)))
+			if ((delta_E < 0) )//|| (dis(generator) < (double)exp(-delta_E)))
 			{
 				//spin(x, y) *= -1;
 
 				M += delta_M;												// New Magnetization energy of flipped configuration
 				E += delta_E;												// New total energy of flipped configuration
-
+				sumM += M;												    //Summing up M to find sumM
+				avgM = (sumM) / currConfig;									//Average M
 				flipCounter++;												// Total number of sites chosen up till this point
 			}
 			else
 			{
-				cSpin flip;
 				//currConfig = (double)flipCounter / (LatSize * LatSize);     //Number of Sweeps
-
 				flipCounter1++;   //Number of Flips
-
 			}
-
+			
 			currConfig = (double)flipCounter / (LatSize * LatSize);	//Total number of sweeps till this point
 			if (currConfig == 0)
 				currConfig = 1;
 		}
 
-
-		sumM += M;                       //Summing up M to find sumM
-		avgM = (sumM) / currConfig;    //Average M
+		
+		
 
 		cout << s << "    E: " << E << "        T: " << T << endl;
-
-		spin.display();
+		
 
 		//spin.LogMatrix(logFlag1,  Temp, E);
 
