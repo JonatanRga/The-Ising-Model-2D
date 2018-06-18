@@ -277,15 +277,7 @@ int main()
 
 	}
 
-	/*
-	std::cout << "The site chosen is at (" << x << ", " << y << ") = " << spin(x, y) << endl;
-	std::cout << "The left neighbour has spin = " << spin(x-1, y) << endl;
-	std::cout << "The right neighbour has spin = " << spin(x+1, y) << endl;
-	std::cout << "The above neighbour has spin = " << spin(x, y-1) << endl;
-	std::cout << "The below neighbour has spin = " << spin(x, y+1) << endl;
-	std::cout << "The change in neighbour energy = " << delta_neighbour << endl;
-	std::cout << "The change in total energy dE =" << delta_E << endl;
-	*/
+	
 	std::cout << "flips summary: " << (flipCounter + flipCounter1) << endl;
 	std::cout << "The number of flips E<0: " << flipCounter << "   The number of flips E>=0: " << flipCounter1 << endl;
 	//std::cout << "The number of sweeps = " << currConfig << endl;
