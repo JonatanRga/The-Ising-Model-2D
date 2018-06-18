@@ -9,7 +9,7 @@ using namespace std;
 
 const int LatSize = 10;
 
-mt19937 generator(124);
+mt19937 generator(125);
 uniform_real_distribution<double> dis(0.00, 1.00);
 
 //gsl_rng_uniform(r)     decided to use in build to random libary MersneTwister generator instead GSL LIB
@@ -129,18 +129,18 @@ int main()
 
 	int M1;
 	int LogFlag1 = 0;		//using for log creation
-	int neighbour = 2;    // nearest neighbour count
+	int neighbour = 4;    // nearest neighbour count
 	int flipCounter = 1; // number of flips count when energy is lower
 	int flipCounter1 = 1;	//numer of flips when energy is else
 	int currConfig = 1; //number of sweeps count
-	const int Nflips = 20;  // number of sweeps	520
+	const int Nflips = 200;  // number of sweeps	520
 	double avgM;          // average magnetic moment
 	int M[N] = {};	  //will store current sum Spin - Z
 	int sumM = 0;   //Cumulative Magnetic Moment starts from 0
-	double sumE = 0;
+	double sumE = 0.0;
 	double E[N] = {};		//Energy
 	double T[N];		//Temperature
-	double kB = 1.0;  // 8.6173303e-5;	//Boltzman constant in eV/K
+	double kB = 1.0;//8.6173303e-5;	//Boltzman constant in eV/K
 
 
 	int x;		// coordinates on the ising matrix
@@ -148,36 +148,53 @@ int main()
 
 	float pFlip;	//probability of flip
 
-	double delta_M = 0;
-	double delta_neighbour = 0;
-	double delta_E = 0;
+	double delta_M = 0.0;
+	double delta_neighbour = 0.0;
+	double delta_E = 0.0;
 
 	int bezpiecznik = 0;
 
 	cSpin	spin;
 
+
+	/*
+
+	int E = -J * neighbour - B * M;   //Total Energy
+
+	int delta_M = -2 * spin(x, y);	//change in Magnetic Moment
+
+	int delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
+
+	int delta_E = -J * delta_neighbour - B * delta_M; //Change in total energy
+
+	int M_Sum = 0;   //Cumulative Magnetic Moment starts from 0
+
+
+	*/
+
 	do       //	we are choosing state answering to temperature range in while condition
 	{
 		cSpin	spin;									// we are choosing initial state
 		M[0] = spin.SpinSum();								//statistic sum in Ising model called also Z
-
+		
 		for (int i = 0; i < LatSize; i++)
 			for (int j = 0; j < LatSize; j++)
 			{
-				y = i;
-				x = j;
-				delta_M += 0.5 * spin(x, y);    //change in Magnetic Moment	2->0.5
+				x = i;
+				y = j;
+				delta_M += -2 * spin(x, y);    //change in Magnetic Moment	2->0.5
 				delta_neighbour += delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
-
 			}
-		delta_E = (-1) * delta_neighbour / 2 - kB * delta_M; //Change in total energy
-		E[0] = -delta_E;
+		
+		
+		delta_E = (-2) * J * delta_neighbour;// - B * M[0]; //Change in total energy
+		E[0] = delta_E;
 		T[0] = (2 * E[0]) / (neighbour *kB);
 		//E = (-1) * ((double)neighbour) / (2 - kB * M);   //Total Energy
 
 		std::cout << "    E: " << E[0] << "        T: " << T[0] << endl;
 
-		bezpiecznik++;
+		bezpiecznik++;		// in case temerature won't be found
 
 
 
@@ -187,7 +204,7 @@ int main()
 	std::cout << endl << "Choosen state to following Energy and Temperature:" << endl;
 	std::cout << "    E: " << E[0] << "        T: " << T[0] << endl;
 	std::cout << endl << "corresponding matrix to this state:" << endl;
-	spin.display(x, y);
+	spin.display(11, 11);
 	std::cout << endl << "cooling down in progress..." << endl;
 	M[0] += delta_M;
 	std::cout << endl << "-------------------------------------" << endl;
@@ -197,46 +214,43 @@ int main()
 	//T = (2 * delta_E) / (delta_neighbour *kB);
 
 	for (int s = 0; s < Nflips;)    //Loop for Nflips of sweeps
-	{
-		//spin.display();
-		for (int i = 0; i < LatSize*LatSize; i++)
-		{
-			//for (int j = 0; j < LatSize; j++)
-			//{												//generate_random_coordinate_location
-			y = (int)(dis(generator) * (LatSize));       //Randomly choose x-coordinate add1
-			x = (int)(dis(generator) * (LatSize));        //Randomly choose y-coordinate add1
+	{										//22 flips??!!
+														//generate_random_coordinate_location
+			y = (int)(dis(generator) * (LatSize + 1));       //Randomly choose x-coordinate add1
+			x = (int)(dis(generator) * (LatSize + 1));        //Randomly choose y-coordinate add1
 			spin(x, y) *= (-1);
-			delta_M += 2 * spin(x, y);    //change in Magnetic Moment
+			delta_M += -2.0 * spin(x, y);    //change in Magnetic Moment
 
 			cout << "x: " << x << "    y: " << y << endl;
 			std::cout << "s0: " << spin(x, y) << " sL: " << spin(x - 1, y) << " sR: " << spin(x + 1, y) << " sU: " << spin(x, y - 1) << " sD: " << spin(x, y + 1) << endl;
 
 
+			M[flipCounter] = spin.SpinSum();
 			delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
-			//}
-			//	}
+			delta_E = -J * delta_neighbour - B * M[flipCounter];														//Change in total energy
 
-			delta_E = (-1) * delta_neighbour /( 2.0 - kB * delta_M); //Change in total energy
+		
+			//delta_E = (-1.0) * delta_neighbour /( 2.0 - kB * delta_M); //Change in total energy
 																 //E = (-1) * neighbour / (2 - kB * M);   //Total Energy
 
-			if ((delta_E < 0.0) )//|| (dis(generator) < (double)exp(-kB * delta_E)))
+			if ((delta_E < 0.0) || (dis(generator) < (double)exp(-kB * delta_E)))
 			{
 				//spin(x, y) *= -1;
 
 				M[flipCounter] = spin.SpinSum() + delta_M;											// New Magnetization energy of flipped configuration
-				sumE += E[flipCounter] = delta_E;												// New total energy of flipped configuration
-				T[flipCounter] = (2 * delta_E) / (delta_neighbour *kB);
+				sumE += E[flipCounter] = -delta_E;												// New total energy of flipped configuration
+				T[flipCounter] = (2.0 * (-sumE)) / (neighbour *kB);
 				sumM += M[flipCounter];												    //Summing up M to find sumM
 
 
 																						//currConfig = (double)flipCounter / (LatSize * LatSize);	//Total number of sweeps till this point
 																						//currConfig = (double)flipCounter / (LatSize * LatSize);	    //Total number of sweeps till this point
 
-				std::cout << "------------Success!------------------" << endl;
-				std::cout << s << ".    E: " << sumE <<"    delta E: "<< delta_E<< "        T: " << T[flipCounter] << "        M: " << M[flipCounter] << endl;
+				std::cout << (s + 1) << ".-----------Success!------------------" << endl;
+				std::cout << "E: " << sumE <<"    delta E: "<< delta_E<< "        T: " << T[flipCounter] << "        M: " << M[flipCounter] << endl;
 				std::cout << "x: " << y << "    y: " << x << endl;
 				spin.display(x, y);
-				std::cout << "-------------------------------------" << endl;
+				std::cout << "----------------------------------------" << endl;
 
 				//if (currConfig == 0)
 				//	currConfig = 1;
@@ -253,13 +267,8 @@ int main()
 				//currConfig = (double)flipCounter / (LatSize * LatSize);     //Number of Sweeps
 				flipCounter1++;   //Number of Flips
 			}
-		}
-
-
-
-
-
-		//spin.LogMatrix(logFlag1,  Temp, E);
+		
+		//spin.LogMatrix(logFlag1,  T, E);
 
 
 		//std::cout << "The Magnetic Moment after " << currConfig << " sweeps = " << M << endl;
