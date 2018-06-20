@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <cmath>
 #include <iomanip>		// for proper show Ising Matrix
 #include <cstdlib>
 #include <fstream>
@@ -133,14 +134,14 @@ int main()
 	int flipCounter = 1; // number of flips count when energy is lower
 	int flipCounter1 = 1;	//numer of flips when energy is else
 	int currConfig = 1; //number of sweeps count
-	const int Nflips = 200;  // number of sweeps	520
+	const int Nflips = 2000;  // number of sweeps	520
 	double avgM;          // average magnetic moment
 	int M[N] = {};	  //will store current sum Spin - Z
 	int sumM = 0;   //Cumulative Magnetic Moment starts from 0
 	double sumE = 0.0;
 	double E[N] = {};		//Energy
-	double T[N];		//Temperature
-	double kB = 1.0;//8.6173303e-5;	//Boltzman constant in eV/K
+	double T[N] = {};		//Temperature
+	double kB = 0.01 ;//8.6173303e-5;	//Boltzman constant in eV/K
 
 
 	int x;		// coordinates on the ising matrix
@@ -156,7 +157,6 @@ int main()
 
 	cSpin	spin;
 
-
 	/*
 
 	int E = -J * neighbour - B * M;   //Total Energy
@@ -170,35 +170,42 @@ int main()
 	int M_Sum = 0;   //Cumulative Magnetic Moment starts from 0
 
 
-	*/
+	
 
 	do       //	we are choosing state answering to temperature range in while condition
 	{
 		cSpin	spin;									// we are choosing initial state
-		M[0] = spin.SpinSum();								//statistic sum in Ising model called also Z
-		
+		//M[0] = spin.SpinSum();								//statistic sum in Ising model called also Z
+		int sSum = 0;
+
 		for (int i = 0; i < LatSize; i++)
+		{
 			for (int j = 0; j < LatSize; j++)
 			{
-				x = i;
-				y = j;
-				delta_M += -2 * spin(x, y);    //change in Magnetic Moment	2->0.5
-				delta_neighbour += delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
+				sSum += spin(i, j);
+				
+				//delta_M += -2 * spin(x, y);    //change in Magnetic Moment	2->0.5
+				//delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
+
 			}
-		
-		
-		delta_E = (-2) * J * delta_neighbour;// - B * M[0]; //Change in total energy
-		E[0] = delta_E;
-		T[0] = (2 * E[0]) / (neighbour *kB);
+
+		}
+
+		std::cout << endl << sSum << endl;
+
+		delta_E = exp(sSum / kB);// - B * M[0]; //Change in total energy
+		//E[0] = delta_E;
+		//T[0] = (2 * E[0]) / (neighbour *kB);
 		//E = (-1) * ((double)neighbour) / (2 - kB * M);   //Total Energy
 
-		std::cout << "    E: " << E[0] << "        T: " << T[0] << endl;
+		std::cout << "    E: " << delta_E << "        T: " << T[0] << endl;
 
 		bezpiecznik++;		// in case temerature won't be found
 
 
+	} while (!(((T[0] > 200) && (T[0] < 300)) || (bezpiecznik > 10)));
+	*/
 
-	} while (!(((T[0] > 200) && (T[0] < 300)) || (bezpiecznik > 1000)));
 
 	std::cout << endl << "-------------------------------------" << endl;
 	std::cout << endl << "Choosen state to following Energy and Temperature:" << endl;
@@ -227,13 +234,13 @@ int main()
 
 			M[flipCounter] = spin.SpinSum();
 			delta_neighbour = delta_M * (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
-			delta_E = -J * delta_neighbour - B * M[flipCounter];														//Change in total energy
-
+			delta_E = exp(delta_neighbour / kB);														//Change in total energy
+			
 		
 			//delta_E = (-1.0) * delta_neighbour /( 2.0 - kB * delta_M); //Change in total energy
 																 //E = (-1) * neighbour / (2 - kB * M);   //Total Energy
 
-			if ((delta_E < 0.0) || (dis(generator) < (double)exp(-kB * delta_E)))
+			if ( (dis(generator) < (double)exp(-kB * delta_E)) ) //delta_E < 0.0) ||
 			{
 				//spin(x, y) *= -1;
 
@@ -277,7 +284,15 @@ int main()
 
 	}
 
-	
+	/*
+	std::cout << "The site chosen is at (" << x << ", " << y << ") = " << spin(x, y) << endl;
+	std::cout << "The left neighbour has spin = " << spin(x-1, y) << endl;
+	std::cout << "The right neighbour has spin = " << spin(x+1, y) << endl;
+	std::cout << "The above neighbour has spin = " << spin(x, y-1) << endl;
+	std::cout << "The below neighbour has spin = " << spin(x, y+1) << endl;
+	std::cout << "The change in neighbour energy = " << delta_neighbour << endl;
+	std::cout << "The change in total energy dE =" << delta_E << endl;
+	*/
 	std::cout << "flips summary: " << (flipCounter + flipCounter1) << endl;
 	std::cout << "The number of flips E<0: " << flipCounter << "   The number of flips E>=0: " << flipCounter1 << endl;
 	//std::cout << "The number of sweeps = " << currConfig << endl;
