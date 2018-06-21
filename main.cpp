@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const int LatSize = 40;
+const int LatSize = 10;
 int iMatrix[LatSize][LatSize];
 
 //gsl_rng_uniform(r)     decided to use in build to random libary MersneTwister generator instead GSL LIB
@@ -160,9 +160,9 @@ int main()
 						y = j;        // (int)(dis(generator) * (LatSize + 1));       //Randomly choose x-coordinate
 						x = i;       //(int)(dis(generator) * (LatSize + 1));       //Randomly choose y-coordinate
 																		 // 2. Than flip it
-						spin(x, y) *= (-1);
+						iMatrix[i][j] *= (-1);
 						// 3. Than we do this counting:
-						delta_E = 2.0 *J* spin(x, y)* (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
+						delta_E = 2.0 *J* iMatrix[i][j]* (spin(x - 1, y) + spin(x + 1, y) + spin(x, y - 1) + spin(x, y + 1));
 
 						//cout << "x: " << x << "    y: " << y << endl;
 						//std::cout << "s0: " << spin(x, y) << " sL: " << spin(x - 1, y) << " sR: " << spin(x + 1, y) << " sU: " << spin(x, y - 1) << " sD: " << spin(x, y + 1) << endl;
@@ -170,10 +170,10 @@ int main()
 						//M[flipCounter] = spin.SpinSum();
 
 						// 4. Than we chceck condition for acceptance, first: Is it smaller than previous energy?, second: Is it smaller than some random? - just to not stuck overflow :)
-						if ((delta_E > 0) || (dis(generator) > ((double)exp(delta_E / T))))
+						if ((delta_E > 0) || (dis(generator) >= ((double)exp(delta_E / T))))
 						{
 							//4a. Condtion was succefully accepted, so we accept this state to be our new state
-							spin(x, y) *= -1;							//get back previous state
+							iMatrix[i][j] *= -1;							//get back previous state
 							flipCounter++;								//counts successfoul events
 							E += delta_E;
 						}
@@ -182,9 +182,14 @@ int main()
 				// 5. If we did enough step to let the Ising matrix normalize a bit, than we can messure magnetization also
 
 
-				if ((k % sample == 0) && (k > init))
+				if ((flipCounter > init) && flipCounter%1000 ==0)
 				{
-					M += ((double) abs(spin.SpinSum())) / size;
+					double sumM = 0.;
+					for (int i = 0; i < LatSize; i++)
+						for (int j = 0; j < LatSize; j++)
+							sumM += iMatrix[i][j];
+
+					M += (1. * abs(sumM) /(1.* size));
 					cout << k << "       " << flipCounter <<"       " << "E: " << E  <<"\r";
 					magnetCounter++;
 					flipCounter = 0;
