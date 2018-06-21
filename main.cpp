@@ -199,7 +199,7 @@ int main()
 			//spin.display();
 
 			M = 0.0;
-			T += 0.1;	// Temperature step
+			T += 0.05;	// Temperature step
 			magnetCounter = 0;
 
 		} while (T < 3.55);
